@@ -53,6 +53,10 @@ var (
 	VarBoolStrict bool
 	// VarStringSliceIgnoreColumns represents the columns which are ignored.
 	VarStringSliceIgnoreColumns []string
+	// VarBoolUseGorm describes whether to use gorm.
+	VarBoolUseGorm bool
+	// VarStringDelTimeKey represents the deleted time key.
+	VarStringDelTimeKey string
 )
 
 var errNotMatched = errors.New("sql not matched")
@@ -69,6 +73,8 @@ func MysqlDDL(_ *cobra.Command, _ []string) error {
 	home := VarStringHome
 	remote := VarStringRemote
 	branch := VarStringBranch
+	useGorm := VarBoolUseGorm
+	delTimeKey := VarStringDelTimeKey
 	if len(remote) > 0 {
 		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
@@ -92,6 +98,8 @@ func MysqlDDL(_ *cobra.Command, _ []string) error {
 		database:      database,
 		strict:        VarBoolStrict,
 		ignoreColumns: mergeColumns(VarStringSliceIgnoreColumns),
+		useGorm:       useGorm,
+		delTimeKey:    delTimeKey,
 	}
 	return fromDDL(arg)
 }
@@ -107,6 +115,8 @@ func MySqlDataSource(_ *cobra.Command, _ []string) error {
 	home := VarStringHome
 	remote := VarStringRemote
 	branch := VarStringBranch
+	useGorm := VarBoolUseGorm
+	delTimeKey := VarStringDelTimeKey
 	if len(remote) > 0 {
 		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
@@ -133,6 +143,8 @@ func MySqlDataSource(_ *cobra.Command, _ []string) error {
 		idea:          idea,
 		strict:        VarBoolStrict,
 		ignoreColumns: mergeColumns(VarStringSliceIgnoreColumns),
+		useGorm:       useGorm,
+		delTimeKey:    delTimeKey,
 	}
 	return fromMysqlDataSource(arg)
 }
@@ -197,6 +209,8 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 	home := VarStringHome
 	remote := VarStringRemote
 	branch := VarStringBranch
+	useGorm := VarBoolUseGorm
+	delTimeKey := VarStringDelTimeKey
 	if len(remote) > 0 {
 		repo, _ := file.CloneIntoGitHome(remote, branch)
 		if len(repo) > 0 {
@@ -217,7 +231,7 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return fromPostgreSqlDataSource(url, pattern, dir, schema, cfg, cache, idea, VarBoolStrict)
+	return fromPostgreSqlDataSource(url, pattern, dir, schema, cfg, cache, idea, VarBoolStrict, useGorm, delTimeKey)
 }
 
 type ddlArg struct {
@@ -227,6 +241,8 @@ type ddlArg struct {
 	database      string
 	strict        bool
 	ignoreColumns []string
+	useGorm       bool
+	delTimeKey    string
 }
 
 func fromDDL(arg ddlArg) error {
@@ -252,7 +268,7 @@ func fromDDL(arg ddlArg) error {
 	}
 
 	for _, file := range files {
-		err = generator.StartFromDDL(file, arg.cache, arg.strict, arg.database)
+		err = generator.StartFromDDL(file, arg.cache, arg.strict, arg.database, arg.useGorm, arg.delTimeKey)
 		if err != nil {
 			return err
 		}
@@ -266,6 +282,8 @@ type dataSourceArg struct {
 	tablePat      pattern
 	cfg           *config.Config
 	cache, idea   bool
+	useGorm       bool
+	delTimeKey    string
 	strict        bool
 	ignoreColumns []string
 }
@@ -326,10 +344,10 @@ func fromMysqlDataSource(arg dataSourceArg) error {
 		return err
 	}
 
-	return generator.StartFromInformationSchema(matchTables, arg.cache, arg.strict)
+	return generator.StartFromInformationSchema(matchTables, arg.cache, arg.strict, arg.useGorm, arg.delTimeKey)
 }
 
-func fromPostgreSqlDataSource(url, pattern, dir, schema string, cfg *config.Config, cache, idea, strict bool) error {
+func fromPostgreSqlDataSource(url, pattern, dir, schema string, cfg *config.Config, cache, idea, strict bool, useGorm bool, delTimeKey string) error {
 	log := console.NewConsole(idea)
 	if len(url) == 0 {
 		log.Error("%v", "expected data source of postgresql, but nothing found")
@@ -381,5 +399,5 @@ func fromPostgreSqlDataSource(url, pattern, dir, schema string, cfg *config.Conf
 		return err
 	}
 
-	return generator.StartFromInformationSchema(matchTables, cache, strict)
+	return generator.StartFromInformationSchema(matchTables, cache, strict, useGorm, delTimeKey)
 }

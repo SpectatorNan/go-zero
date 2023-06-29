@@ -109,8 +109,8 @@ func newDefaultOption() Option {
 	}
 }
 
-func (g *defaultGenerator) StartFromDDL(filename string, withCache, strict bool, database string) error {
-	modelList, err := g.genFromDDL(filename, withCache, strict, database)
+func (g *defaultGenerator) StartFromDDL(filename string, withCache, strict bool, database string, useGorm bool, delTimeKey string) error {
+	modelList, err := g.genFromDDL(filename, withCache, strict, database, useGorm, delTimeKey)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (g *defaultGenerator) StartFromDDL(filename string, withCache, strict bool,
 	return g.createFile(modelList)
 }
 
-func (g *defaultGenerator) StartFromInformationSchema(tables map[string]*model.Table, withCache, strict bool) error {
+func (g *defaultGenerator) StartFromInformationSchema(tables map[string]*model.Table, withCache, strict, useGorm bool, delTimeKey string) error {
 	m := make(map[string]*codeTuple)
 	for _, each := range tables {
 		table, err := parser.ConvertDataType(each, strict)
@@ -126,7 +126,7 @@ func (g *defaultGenerator) StartFromInformationSchema(tables map[string]*model.T
 			return err
 		}
 
-		code, err := g.genModel(*table, withCache)
+		code, err := g.genModel(*table, withCache, useGorm, delTimeKey)
 		if err != nil {
 			return err
 		}
@@ -208,7 +208,7 @@ func (g *defaultGenerator) createFile(modelList map[string]*codeTuple) error {
 }
 
 // ret1: key-table name,value-code
-func (g *defaultGenerator) genFromDDL(filename string, withCache, strict bool, database string) (
+func (g *defaultGenerator) genFromDDL(filename string, withCache, strict bool, database string, useGorm bool, delTimeKey string) (
 	map[string]*codeTuple, error,
 ) {
 	m := make(map[string]*codeTuple)
@@ -218,7 +218,7 @@ func (g *defaultGenerator) genFromDDL(filename string, withCache, strict bool, d
 	}
 
 	for _, e := range tables {
-		code, err := g.genModel(*e, withCache)
+		code, err := g.genModel(*e, withCache, useGorm, delTimeKey)
 		if err != nil {
 			return nil, err
 		}
@@ -254,7 +254,7 @@ func (t Table) isIgnoreColumns(columnName string) bool {
 	return false
 }
 
-func (g *defaultGenerator) genModel(in parser.Table, withCache bool) (string, error) {
+func (g *defaultGenerator) genModel(in parser.Table, withCache bool, useGorm bool, delTimeKey string) (string, error) {
 	if len(in.PrimaryKey.Name.Source()) == 0 {
 		return "", fmt.Errorf("table %s: missing primary key", in.Name.Source())
 	}
@@ -268,7 +268,9 @@ func (g *defaultGenerator) genModel(in parser.Table, withCache bool) (string, er
 	table.ContainsUniqueCacheKey = len(uniqueKey) > 0
 	table.ignoreColumns = g.ignoreColumns
 
-	importsCode, err := genImports(table, withCache, in.ContainsTime())
+	////
+
+	importsCode, err := genImports(table, withCache, in.ContainsTime(), in.ContainsNullType(useGorm, delTimeKey))
 	if err != nil {
 		return "", err
 	}
@@ -350,6 +352,17 @@ func (g *defaultGenerator) genModelCustom(in parser.Table, withCache bool) (stri
 		return "", err
 	}
 
+	gormCreatedAt := false
+	gormUpdatedAt := false
+	for _, field := range in.Fields {
+		if field.Name.Source() == "created_at" {
+			gormCreatedAt = true
+		}
+		if field.Name.Source() == "updated_at" {
+			gormUpdatedAt = true
+		}
+	}
+
 	t := util.With("model-custom").
 		Parse(text).
 		GoFmt(true)
@@ -358,6 +371,8 @@ func (g *defaultGenerator) genModelCustom(in parser.Table, withCache bool) (stri
 		"withCache":             withCache,
 		"upperStartCamelObject": in.Name.ToCamel(),
 		"lowerStartCamelObject": stringx.From(in.Name.ToCamel()).Untitle(),
+		"gormCreatedAt":         gormCreatedAt,
+		"gormUpdatedAt":         gormUpdatedAt,
 	})
 	if err != nil {
 		return "", err

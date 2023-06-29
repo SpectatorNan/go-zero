@@ -17,6 +17,7 @@ import (
 )
 
 const timeImport = "time.Time"
+const nullTypePrefix = "sql.Null"
 
 type (
 	// Table describes a mysql table
@@ -260,6 +261,19 @@ func convertColumns(columns []*parser.Column, primaryColumn string, strict bool)
 func (t *Table) ContainsTime() bool {
 	for _, item := range t.Fields {
 		if item.DataType == timeImport {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainsNullType returns true if contains database/sql type sql.NullXxx
+func (t *Table) ContainsNullType(useGorm bool, delTimeKey string) bool {
+	if !useGorm {
+		return true
+	}
+	for _, item := range t.Fields {
+		if strings.HasPrefix(item.DataType, nullTypePrefix) && item.Name.Source() != delTimeKey {
 			return true
 		}
 	}
