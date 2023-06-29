@@ -35,7 +35,7 @@ func init() {
 	ddlCmdFlags.StringVar(&command.VarStringRemote, "remote")
 	ddlCmdFlags.StringVar(&command.VarStringBranch, "branch")
 	ddlCmdFlags.BoolVarP(&command.VarBoolUseGorm, "useGorm", "g")
-	ddlCmdFlags.StringVarPWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "dtk", "deleted_at")
+	ddlCmdFlags.StringVarWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "deleted_at")
 
 	datasourceCmdFlags.StringVar(&command.VarStringURL, "url")
 	datasourceCmdFlags.StringSliceVarP(&command.VarStringSliceTable, "table", "t")
@@ -47,7 +47,7 @@ func init() {
 	datasourceCmdFlags.StringVar(&command.VarStringRemote, "remote")
 	datasourceCmdFlags.StringVar(&command.VarStringBranch, "branch")
 	datasourceCmdFlags.BoolVarP(&command.VarBoolUseGorm, "useGorm", "g")
-	datasourceCmdFlags.StringVarPWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "dtk", "deleted_at")
+	datasourceCmdFlags.StringVarWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "deleted_at")
 
 	pgDatasourceCmdFlags.StringVar(&command.VarStringURL, "url")
 	pgDatasourceCmdFlags.StringVarP(&command.VarStringTable, "table", "t")
@@ -60,8 +60,8 @@ func init() {
 	pgDatasourceCmdFlags.StringVar(&command.VarStringHome, "home")
 	pgDatasourceCmdFlags.StringVar(&command.VarStringRemote, "remote")
 	pgDatasourceCmdFlags.StringVar(&command.VarStringBranch, "branch")
-	pgDatasourceCmdFlags.BoolVarP(&command.VarBoolUseGorm, "useGorm", "gorm")
-	pgDatasourceCmdFlags.StringVarPWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "del_key", "deleted_at")
+	pgDatasourceCmdFlags.BoolVarP(&command.VarBoolUseGorm, "useGorm", "g")
+	pgDatasourceCmdFlags.StringVarWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "deleted_at")
 
 	mongoCmdFlags.StringSliceVarP(&mongo.VarStringSliceType, "type", "t")
 	mongoCmdFlags.BoolVarP(&mongo.VarBoolCache, "cache", "c")
