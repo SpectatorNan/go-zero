@@ -3,6 +3,7 @@ package mapping
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -4979,6 +4980,62 @@ func TestUnmarshaler_Unmarshal(t *testing.T) {
 		err := unmarshaler.UnmarshalValuer(nil, &i)
 		assert.Error(t, err)
 	})
+
+	t.Run("slice element missing error", func(t *testing.T) {
+		type inner struct {
+			S []struct {
+				Name string `json:"name"`
+				Age  int    `json:"age"`
+			} `json:"s"`
+		}
+		content := []byte(`{"s": [{"name": "foo"}]}`)
+		var s inner
+		err := UnmarshalJsonBytes(content, &s)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "s[0].age")
+	})
+
+	t.Run("map element missing error", func(t *testing.T) {
+		type inner struct {
+			S map[string]struct {
+				Name string `json:"name"`
+				Age  int    `json:"age"`
+			} `json:"s"`
+		}
+		content := []byte(`{"s": {"a":{"name": "foo"}}}`)
+		var s inner
+		err := UnmarshalJsonBytes(content, &s)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "s[a].age")
+	})
+}
+
+// TestUnmarshalerProcessFieldPrimitiveWithJSONNumber test the number type check.
+func TestUnmarshalerProcessFieldPrimitiveWithJSONNumber(t *testing.T) {
+	t.Run("wrong type", func(t *testing.T) {
+		expectValue := "1"
+		realValue := 1
+		fieldType := reflect.TypeOf(expectValue)
+		value := reflect.ValueOf(&realValue) // pass a pointer to the value
+		v := json.Number(expectValue)
+		m := NewUnmarshaler("field")
+		err := m.processFieldPrimitiveWithJSONNumber(fieldType, value.Elem(), v,
+			&fieldOptionsWithContext{}, "field")
+		assert.Error(t, err)
+		assert.Equal(t, `type mismatch for field "field", expect "string", actual "int"`, err.Error())
+	})
+
+	t.Run("right type", func(t *testing.T) {
+		expectValue := int64(1)
+		realValue := int64(1)
+		fieldType := reflect.TypeOf(expectValue)
+		value := reflect.ValueOf(&realValue) // pass a pointer to the value
+		v := json.Number(strconv.FormatInt(expectValue, 10))
+		m := NewUnmarshaler("field")
+		err := m.processFieldPrimitiveWithJSONNumber(fieldType, value.Elem(), v,
+			&fieldOptionsWithContext{}, "field")
+		assert.NoError(t, err)
+	})
 }
 
 func TestGetValueWithChainedKeys(t *testing.T) {
@@ -5022,6 +5079,17 @@ func TestGetValueWithChainedKeys(t *testing.T) {
 		}, []string{"foo", "bar"})
 		assert.False(t, ok)
 	})
+}
+
+func TestUnmarshalFromStringSliceForTypeMismatch(t *testing.T) {
+	var v struct {
+		Values map[string][]string `key:"values"`
+	}
+	assert.Error(t, UnmarshalKey(map[string]any{
+		"values": map[string]any{
+			"foo": "bar",
+		},
+	}, &v))
 }
 
 func BenchmarkDefaultValue(b *testing.B) {
