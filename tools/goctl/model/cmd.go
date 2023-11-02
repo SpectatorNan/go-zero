@@ -62,6 +62,8 @@ func init() {
 	pgDatasourceCmdFlags.StringVar(&command.VarStringBranch, "branch")
 	pgDatasourceCmdFlags.BoolVarP(&command.VarBoolUseGorm, "useGorm", "g")
 	pgDatasourceCmdFlags.StringVarWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "deleted_at")
+	pgCmd.PersistentFlags().StringSliceVarPWithDefaultValue(&command.VarStringSliceIgnoreColumns,
+		"ignore-columns", "i", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"})
 
 	mongoCmdFlags.StringSliceVarP(&mongo.VarStringSliceType, "type", "t")
 	mongoCmdFlags.BoolVarP(&mongo.VarBoolCache, "cache", "c")
@@ -73,7 +75,8 @@ func init() {
 	mongoCmdFlags.StringVar(&mongo.VarStringBranch, "branch")
 
 	mysqlCmd.PersistentFlags().BoolVar(&command.VarBoolStrict, "strict")
-	mysqlCmd.PersistentFlags().StringSliceVarPWithDefaultValue(&command.VarStringSliceIgnoreColumns, "ignore-columns", "i", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"})
+	mysqlCmd.PersistentFlags().StringSliceVarPWithDefaultValue(&command.VarStringSliceIgnoreColumns,
+		"ignore-columns", "i", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"})
 
 	mysqlCmd.AddCommand(datasourceCmd, ddlCmd)
 	pgCmd.AddCommand(pgDatasourceCmd)
