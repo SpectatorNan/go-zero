@@ -50,7 +50,7 @@ func init() {
 	datasourceCmdFlags.StringVarWithDefaultValue(&command.VarStringDelTimeKey, "delTimeKey", "deleted_at")
 
 	pgDatasourceCmdFlags.StringVar(&command.VarStringURL, "url")
-	pgDatasourceCmdFlags.StringVarP(&command.VarStringTable, "table", "t")
+	pgDatasourceCmdFlags.StringSliceVarP(&command.VarStringSliceTable, "table", "t")
 	pgDatasourceCmdFlags.StringVarPWithDefaultValue(&command.VarStringSchema, "schema", "s", "public")
 	pgDatasourceCmdFlags.BoolVarP(&command.VarBoolCache, "cache", "c")
 	pgDatasourceCmdFlags.StringVarP(&command.VarStringDir, "dir", "d")
