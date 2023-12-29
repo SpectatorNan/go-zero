@@ -230,7 +230,7 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 	}
 	ignoreColumns := mergeColumns(VarStringSliceIgnoreColumns)
 
-	return fromPostgreSqlDataSource(url, pattern, dir, schema, cfg, cache, idea, VarBoolStrict, ignoreColumns, useGorm, delTimeKey)
+	return fromPostgreSqlDataSource(url, patterns, dir, schema, cfg, cache, idea, VarBoolStrict, ignoreColumns, useGorm, delTimeKey)
 }
 
 type ddlArg struct {
@@ -346,7 +346,7 @@ func fromMysqlDataSource(arg dataSourceArg) error {
 	return generator.StartFromInformationSchema(matchTables, arg.cache, arg.strict, arg.useGorm, arg.delTimeKey)
 }
 
-func fromPostgreSqlDataSource(url, pattern, dir, schema string, cfg *config.Config, cache, idea, strict bool, ignoreColumns []string, useGorm bool, delTimeKey string) error {
+func fromPostgreSqlDataSource(url string, pattern pattern, dir, schema string, cfg *config.Config, cache, idea, strict bool, ignoreColumns []string, useGorm bool, delTimeKey string) error {
 
 	log := console.NewConsole(idea)
 	if len(url) == 0 {
