@@ -2,13 +2,13 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"strconv"
 	"sync/atomic"
 	"time"
 
-	red "github.com/go-redis/redis/v8"
-
+	red "github.com/redis/go-redis/v9"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stringx"
 )
@@ -42,7 +42,7 @@ type RedisLock struct {
 }
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	rand.NewSource(time.Now().UnixNano())
 }
 
 // NewRedisLock returns a RedisLock.
@@ -65,7 +65,7 @@ func (rl *RedisLock) AcquireCtx(ctx context.Context) (bool, error) {
 	resp, err := rl.store.ScriptRunCtx(ctx, lockScript, []string{rl.key}, []string{
 		rl.id, strconv.Itoa(int(seconds)*millisPerSecond + tolerance),
 	})
-	if err == red.Nil {
+	if errors.Is(err, red.Nil) {
 		return false, nil
 	} else if err != nil {
 		logx.Errorf("Error on acquiring lock for %s, %s", rl.key, err.Error())
