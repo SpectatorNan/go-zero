@@ -8,7 +8,6 @@ import (
 // BuildVersion is the version of goctl.
 const BuildVersion = "1.7.0-gormc"
 
-
 var tag = map[string]int{"pre-alpha": 0, "alpha": 1, "pre-bata": 2, "beta": 3, "released": 4, "": 5}
 
 // GetGoctlVersion returns BuildVersion
