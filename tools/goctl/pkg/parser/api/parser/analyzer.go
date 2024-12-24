@@ -78,7 +78,7 @@ func (a *Analyzer) astTypeToSpec(in ast.DataType) (spec.Type, error) {
 
 		return spec.MapType{
 			RawName: v.RawText(),
-			Key:     v.RawText(),
+			Key:     v.Key.RawText(),
 			Value:   value,
 		}, nil
 	case *ast.PointerDataType:
@@ -176,11 +176,7 @@ func (a *Analyzer) convertKV(kv []*ast.KVExpr) map[string]string {
 	var ret = map[string]string{}
 	for _, v := range kv {
 		key := strings.TrimSuffix(v.Key.Token.Text, ":")
-		if key == summaryKeyText {
-			ret[key] = v.Value.RawText()
-		} else {
-			ret[key] = v.Value.Token.Text
-		}
+		ret[key] = v.Value.RawText()
 	}
 
 	return ret
