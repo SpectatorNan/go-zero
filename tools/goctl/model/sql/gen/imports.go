@@ -49,10 +49,11 @@ func genImports(table Table, withCache, timeImport bool, dbSqlImport bool) (stri
 	}
 
 	buffer, err := util.With("import").Parse(text).Execute(map[string]any{
-		"time":       timeImport,
-		"containsPQ": table.ContainsPQ,
-		"data":       table,
-		"third":      strings.Join(thirdImports, "\n"),
+		"time":          timeImport,
+		"containsPQ":    table.ContainsPQ,
+		"data":          table,
+		"containsDbSql": dbSqlImport,
+		"third":         strings.Join(thirdImports, "\n"),
 	})
 	if err != nil {
 		return "", err
