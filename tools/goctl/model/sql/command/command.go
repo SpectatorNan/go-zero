@@ -239,7 +239,6 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 	}
 	ignoreColumns := mergeColumns(VarStringSliceIgnoreColumns)
 
-
 	arg := pgDataSourceArg{
 		url:           url,
 		dir:           dir,
@@ -248,6 +247,8 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 		cfg:           cfg,
 		cache:         cache,
 		idea:          idea,
+		useGorm:       useGorm,
+		delTimeKey:    delTimeKey,
 		strict:        VarBoolStrict,
 		ignoreColumns: ignoreColumns,
 		prefix:        VarStringCachePrefix,
@@ -377,6 +378,8 @@ type pgDataSourceArg struct {
 	schema        string
 	cfg           *config.Config
 	cache, idea   bool
+	useGorm       bool
+	delTimeKey    string
 	strict        bool
 	ignoreColumns []string
 	prefix        string
@@ -430,5 +433,5 @@ func fromPostgreSqlDataSource(arg pgDataSourceArg) error {
 		return err
 	}
 
-	return generator.StartFromInformationSchema(matchTables, cache, strict, useGorm, delTimeKey)
+	return generator.StartFromInformationSchema(matchTables, arg.cache, arg.strict, arg.useGorm, arg.delTimeKey)
 }
