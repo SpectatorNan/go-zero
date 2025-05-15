@@ -239,7 +239,21 @@ func PostgreSqlDataSource(_ *cobra.Command, _ []string) error {
 	}
 	ignoreColumns := mergeColumns(VarStringSliceIgnoreColumns)
 
-	return fromPostgreSqlDataSource(url, patterns, dir, schema, cfg, cache, idea, VarBoolStrict, ignoreColumns, useGorm, delTimeKey)
+
+	arg := pgDataSourceArg{
+		url:           url,
+		dir:           dir,
+		tablePat:      patterns,
+		schema:        schema,
+		cfg:           cfg,
+		cache:         cache,
+		idea:          idea,
+		strict:        VarBoolStrict,
+		ignoreColumns: ignoreColumns,
+		prefix:        VarStringCachePrefix,
+	}
+
+	return fromPostgreSqlDataSource(arg)
 }
 
 type ddlArg struct {
@@ -357,33 +371,43 @@ func fromMysqlDataSource(arg dataSourceArg) error {
 	return generator.StartFromInformationSchema(matchTables, arg.cache, arg.strict, arg.useGorm, arg.delTimeKey)
 }
 
-func fromPostgreSqlDataSource(url string, pattern pattern, dir, schema string, cfg *config.Config, cache, idea, strict bool, ignoreColumns []string, useGorm bool, delTimeKey string) error {
+type pgDataSourceArg struct {
+	url, dir      string
+	tablePat      pattern
+	schema        string
+	cfg           *config.Config
+	cache, idea   bool
+	strict        bool
+	ignoreColumns []string
+	prefix        string
+}
 
-	log := console.NewConsole(idea)
-	if len(url) == 0 {
+func fromPostgreSqlDataSource(arg pgDataSourceArg) error {
+	log := console.NewConsole(arg.idea)
+	if len(arg.url) == 0 {
 		log.Error("%v", "expected data source of postgresql, but nothing found")
 		return nil
 	}
 
-	if len(pattern) == 0 {
+	if len(arg.tablePat) == 0 {
 		log.Error("%v", "expected table or table globbing patterns, but nothing found")
 		return nil
 	}
-	db := postgres.New(url)
+	db := postgres.New(arg.url)
 	im := model.NewPostgreSqlModel(db)
 
-	tables, err := im.GetAllTables(schema)
+	tables, err := im.GetAllTables(arg.schema)
 	if err != nil {
 		return err
 	}
 
 	matchTables := make(map[string]*model.Table)
 	for _, item := range tables {
-		if !pattern.Match(item) {
+		if !arg.tablePat.Match(item) {
 			continue
 		}
 
-		columnData, err := im.FindColumns(schema, item)
+		columnData, err := im.FindColumns(arg.schema, item)
 		if err != nil {
 			return err
 		}
@@ -400,7 +424,8 @@ func fromPostgreSqlDataSource(url string, pattern pattern, dir, schema string, c
 		return errors.New("no tables matched")
 	}
 
-	generator, err := gen.NewDefaultGenerator("", dir, cfg, gen.WithConsoleOption(log), gen.WithPostgreSql(), gen.WithIgnoreColumns(ignoreColumns))
+	generator, err := gen.NewDefaultGenerator(arg.prefix, arg.dir, arg.cfg, gen.WithConsoleOption(log),
+		gen.WithPostgreSql(), gen.WithIgnoreColumns(arg.ignoreColumns))
 	if err != nil {
 		return err
 	}
