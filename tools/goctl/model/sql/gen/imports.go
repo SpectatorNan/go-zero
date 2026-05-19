@@ -28,8 +28,7 @@ func genImports(table Table, withCache, timeImport bool, dbSqlImport bool) (stri
 			return "", err
 		}
 
-		buffer, err := util.With("import").Parse(text).Execute(map[string]any{
-
+		buffer, err := util.With("import").Parse(text).AddFunc("hasField", hasField(table)).Execute(map[string]any{
 			"time":          timeImport,
 			"containsPQ":    table.ContainsPQ,
 			"data":          table,
